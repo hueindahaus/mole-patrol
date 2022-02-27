@@ -4,7 +4,7 @@ import { Pressable, Text, View } from "react-native";
 import tw from "../styling/tw";
 import Illustration from "../../assets/mole-abduct.svg";
 import { ParamList } from "./MainScreen";
-
+import { Ionicons } from "@expo/vector-icons";
 const GetStartedScreen: React.FC<
   NativeStackScreenProps<ParamList, "GetStarted">
 > = ({ navigation }) => {
@@ -20,9 +20,10 @@ const GetStartedScreen: React.FC<
         onPress={async () => {
           navigation.navigate("Camera");
         }}
-        style={tw`bg-primary py-4 px-8 rounded-sm mt-12`}
+        style={tw`bg-primary py-3 px-8 rounded-sm mt-12 flex flex-row justify-center items-center`}
       >
-        <Text style={tw`text-white text-base`}></Text>
+        <Text style={tw`text-white text-md`}>Scan</Text>
+        <Ionicons name="camera-outline" style={tw`text-white ml-4`} size={18} />
       </Pressable>
     </View>
   );
