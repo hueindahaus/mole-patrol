@@ -1,7 +1,7 @@
 import { MaterialTopTabBarProps } from "@react-navigation/material-top-tabs";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import tw from "../styling/tw";
 import Illustration from "../../assets/mole-search.svg";
 
