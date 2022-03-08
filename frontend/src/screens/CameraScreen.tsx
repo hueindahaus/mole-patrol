@@ -125,15 +125,9 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
                     base64: false,
                   });
 
-                console.log(width + " " + height);
-
                 const cropDim = cameraDim * cameraScale * 0.6;
 
-                const {
-                  uri: imgUri,
-                  width: w,
-                  height: h,
-                } = await ImageManipulator.manipulateAsync(
+                const { uri: imgUri } = await ImageManipulator.manipulateAsync(
                   uri,
                   [
                     {
@@ -147,8 +141,6 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
                   ],
                   { base64: false }
                 );
-                console.log(w);
-                console.log(h);
 
                 navigation.navigate("Result", {
                   imgUri,

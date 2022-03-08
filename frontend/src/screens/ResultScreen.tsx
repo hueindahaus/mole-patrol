@@ -37,7 +37,7 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
       type: mime.getType(uri)!,
     });
 
-    fetch("http://192.168.1.57:5000/predict", {
+    fetch(process.env.BACKEND_URL!, {
       method: "post",
       body: formdata,
       headers: {
@@ -77,7 +77,7 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
 
   return (
     <View style={tw`w-full h-full bg-white flex items-center p-4`}>
-      {/* result.class == Prediction.MALIGNANT ? (
+      {result.class == Prediction.MALIGNANT ? (
         <View
           style={tw`w-full flex flex-col justify-center items-center mt-16`}
         >
@@ -116,8 +116,8 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
             several times and be as accurate as possible in your scanning.
           </Text>
         </View>
-      ) */}
-      <Image
+      )}
+      {/*<Image
         style={tw`rounded-sm`}
         resizeMode={"contain"}
         width={500 / 4}
@@ -125,7 +125,7 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
         source={{
           uri: route.params.imgUri,
         }}
-      />
+      />*/}
       <View style={tw`w-full flex flex-row items-center justify-start mt-12`}>
         <Image
           style={tw`rounded-sm`}
