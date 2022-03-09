@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 import tw from "../styling/tw";
 import { Camera, CameraProps } from "expo-camera";
 import { Dimensions } from "react-native";
@@ -71,35 +71,40 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
           style={tw`flex flex-col w-[${cameraDim}px] h-[${cameraDim}px]`}
           ratio={"1:1"}
           flashMode={"off"}
-          autoFocus
+          autoFocus={"on"}
           useCamera2Api={false}
-          zoom={0.4}
+          zoom={Platform.OS === "android" ? 0.4 : 0.2}
           pictureSize={pictureSize}
           onCameraReady={async () => {
-            const supportedRatios =
+            if (Platform.OS === "android") {
+              const supportedRatios =
               await camera.current?.getSupportedRatiosAsync();
-            if (supportedRatios?.includes("1:1")) {
-              const ratio = "1:1";
+              if (supportedRatios?.includes("1:1")) {
+                const ratio = "1:1";
 
-              const supportedPictureSizes =
-                await camera.current?.getAvailablePictureSizesAsync(ratio);
+                const supportedPictureSizes =
+                  await camera.current?.getAvailablePictureSizesAsync(ratio);
 
-              const bestSupportedPictureSizeIndex = supportedPictureSizes
-                ?.map((picSize) =>
-                  Math.abs(
-                    cameraDim * cameraScale - parseInt(picSize.split("x")[0])
+                const bestSupportedPictureSizeIndex = supportedPictureSizes
+                  ?.map((picSize) =>
+                    Math.abs(
+                      cameraDim * cameraScale - parseInt(picSize.split("x")[0])
+                    )
                   )
-                )
-                .map((x, i) => [x, i])
-                .reduce((r, a) => (a[0] < r[0] ? a : r))[1];
+                  .map((x, i) => [x, i])
+                  .reduce((r, a) => (a[0] < r[0] ? a : r))[1];
 
-              if (supportedPictureSizes && bestSupportedPictureSizeIndex) {
-                const bestSupportedPictureSize =
-                  supportedPictureSizes[bestSupportedPictureSizeIndex];
-                setPictureSize(bestSupportedPictureSize);
+                if (supportedPictureSizes && bestSupportedPictureSizeIndex) {
+                  const bestSupportedPictureSize =
+                    supportedPictureSizes[bestSupportedPictureSizeIndex];
+                  setPictureSize(bestSupportedPictureSize);
+                }
+              } else {
+                setError("Your device camera does not support 1:1 aspect ratio.");
               }
-            } else {
-              setError("Your device camera does not support 1:1 aspect ratio.");
+            } else if (Platform.OS === "ios") {
+              const pictureSizes = await camera.current?.getAvailablePictureSizesAsync();
+              setPictureSize(pictureSizes![0]);
             }
           }}
         >
@@ -118,14 +123,19 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
           style={tw`w-full h-1/2 flex justify-center items-center`}
           onPress={async () => {
             if (camera.current) {
-              console.log(camera.current.props.pictureSize);
               try {
                 let { uri, width, height } =
                   await camera.current.takePictureAsync({
                     base64: false,
                   });
 
-                const cropDim = cameraDim * cameraScale * 0.6;
+                let cropDim;
+
+                if (Platform.OS === "android") {
+                  cropDim = cameraDim * cameraScale * 0.6;
+                } else {
+                  cropDim = Math.min(width, height) * 0.6;
+                }
 
                 const { uri: imgUri } = await ImageManipulator.manipulateAsync(
                   uri,
