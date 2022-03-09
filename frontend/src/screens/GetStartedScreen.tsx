@@ -22,7 +22,7 @@ const GetStartedScreen: React.FC<
         }}
         style={tw`bg-primary py-3 px-8 rounded-sm mt-12 flex flex-row justify-center items-center`}
       >
-        <Text style={tw`text-white text-md`}>Scan</Text>
+        <Text style={tw`text-white text-base`}>Scan</Text>
         <Ionicons name="camera-outline" style={tw`text-white ml-4`} size={18} />
       </Pressable>
     </View>

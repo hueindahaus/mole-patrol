@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useEffect, useRef, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 import tw from "../styling/tw";
 import { Camera, CameraProps } from "expo-camera";
 import { Dimensions } from "react-native";
@@ -16,29 +16,23 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
   const isFocused = useIsFocused();
   const [error, setError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [cameraProps, setCameraProps] = useState<CameraProps>({
-    type: Camera.Constants.Type.back,
-  });
+
+  const [pictureSize, setPictureSize] = useState<string>();
+
   const camera = useRef<Camera>(null);
 
-  const cameraDim = Math.min(
-    Dimensions.get("window").width,
-    Dimensions.get("window").height
+  const cameraDim = useMemo(
+    () =>
+      Math.min(Dimensions.get("screen").width, Dimensions.get("screen").height),
+    []
   );
+
+  const cameraScale = useMemo(() => Dimensions.get("screen").scale, []);
 
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === "granted");
-      const supportedRatios = await camera.current?.getSupportedRatiosAsync();
-      if (!supportedRatios?.includes("1:1")) {
-        setError("Your device camera does not support 1:1 aspect ratio.");
-      } else {
-        setCameraProps((cameraProps) => {
-          cameraProps.ratio = "1:1";
-          return cameraProps;
-        });
-      }
     })();
   }, []);
 
@@ -73,18 +67,54 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
       {isFocused && (
         <Camera
           ref={camera}
-          type={cameraProps.type}
+          type={Camera.Constants.Type.back}
           style={tw`flex flex-col w-[${cameraDim}px] h-[${cameraDim}px]`}
-          ratio={cameraProps.ratio}
+          ratio={"1:1"}
           flashMode={"off"}
-          autoFocus
-          useCamera2Api={true}
-          zoom={0}
+          autoFocus={"on"}
+          useCamera2Api={false}
+          zoom={Platform.OS === "android" ? 0.4 : 0.2}
+          pictureSize={pictureSize}
+          onCameraReady={async () => {
+            if (Platform.OS === "android") {
+              const supportedRatios =
+              await camera.current?.getSupportedRatiosAsync();
+              if (supportedRatios?.includes("1:1")) {
+                const ratio = "1:1";
+
+                const supportedPictureSizes =
+                  await camera.current?.getAvailablePictureSizesAsync(ratio);
+
+                const bestSupportedPictureSizeIndex = supportedPictureSizes
+                  ?.map((picSize) =>
+                    Math.abs(
+                      cameraDim * cameraScale - parseInt(picSize.split("x")[0])
+                    )
+                  )
+                  .map((x, i) => [x, i])
+                  .reduce((r, a) => (a[0] < r[0] ? a : r))[1];
+
+                if (supportedPictureSizes && bestSupportedPictureSizeIndex) {
+                  const bestSupportedPictureSize =
+                    supportedPictureSizes[bestSupportedPictureSizeIndex];
+                  setPictureSize(bestSupportedPictureSize);
+                }
+              } else {
+                setError("Your device camera does not support 1:1 aspect ratio.");
+              }
+            } else if (Platform.OS === "ios") {
+              const pictureSizes = await camera.current?.getAvailablePictureSizesAsync();
+              setPictureSize(pictureSizes![0]);
+            }
+          }}
         >
           <View
             style={tw`flex flex-col h-full w-full justify-center items-center`}
           >
-            <CameraMarks style={tw`h-[${256}px] w-[${256}px]`}></CameraMarks>
+            <CameraMarks
+              height={cameraDim * 0.6}
+              width={cameraDim * 0.6}
+            ></CameraMarks>
           </View>
         </Camera>
       )}
@@ -99,24 +129,31 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
                     base64: false,
                   });
 
-                const { base64: imageBase64Encoded } =
-                  await ImageManipulator.manipulateAsync(
-                    uri,
-                    [
-                      {
-                        crop: {
-                          height: 256,
-                          width: 256,
-                          originX: Math.floor((width - 256) / 2),
-                          originY: Math.floor((height - 256) / 2),
-                        },
+                let cropDim;
+
+                if (Platform.OS === "android") {
+                  cropDim = cameraDim * cameraScale * 0.6;
+                } else {
+                  cropDim = Math.min(width, height) * 0.6;
+                }
+
+                const { uri: imgUri } = await ImageManipulator.manipulateAsync(
+                  uri,
+                  [
+                    {
+                      crop: {
+                        height: cropDim,
+                        width: cropDim,
+                        originX: Math.floor((width - cropDim) / 2),
+                        originY: Math.floor((height - cropDim) / 2),
                       },
-                    ],
-                    { base64: true }
-                  );
+                    },
+                  ],
+                  { base64: false }
+                );
 
                 navigation.navigate("Result", {
-                  imageBase64Encoded: imageBase64Encoded!,
+                  imgUri,
                 });
               } catch (error) {
                 console.log(error);

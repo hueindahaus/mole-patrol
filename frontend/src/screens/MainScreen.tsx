@@ -8,7 +8,7 @@ import ResultScreen from "./ResultScreen";
 export type ParamList = {
   Camera: undefined;
   GetStarted: undefined;
-  Result: { imageBase64Encoded: string };
+  Result: { imgUri: string };
 };
 
 const MainScreen: React.FC = ({}) => {

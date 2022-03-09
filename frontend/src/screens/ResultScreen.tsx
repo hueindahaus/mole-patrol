@@ -2,14 +2,12 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { Text, Image, View } from "react-native";
 import tw from "../styling/tw";
-import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-react-native";
 import { ParamList } from "./MainScreen";
-import { base64ToTensor } from "../utils/tf-utils";
-import { Rank, Tensor } from "@tensorflow/tfjs";
 import MalignantIllustration from "../../assets/doctors.svg";
 import UncertainIllustration from "../../assets/confirmed.svg";
 import BenignIllustration from "../../assets/well-done.svg";
+import mime from "mime";
 
 enum Prediction {
   MALIGNANT = "Malignant",
@@ -21,64 +19,40 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
   navigation,
   route,
 }) => {
-  const [prediction, setPrediction] = useState<{
+  const [result, setResult] = useState<{
     value: number;
     class: Prediction;
+    base64Image: string;
   } | null>(null);
+
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    //anonymous func
-    (async function () {
-      try {
-        await tf.setBackend("cpu");
-        await tf.ready();
+    const formdata = new FormData();
+    const uri = route.params.imgUri;
+    formdata.append("img", {
+      //@ts-ignore
+      uri,
+      name: "img",
+      type: mime.getType(uri)!,
+    });
 
-        // Convert base64 encoded image to tensor -> resize to inputDim x inputDim -> add batch dim
-        let imageTensor = await base64ToTensor(route.params.imageBase64Encoded);
-        imageTensor = await tf.image.resizeBilinear(imageTensor!, [256, 256]);
-        const imageTensorWithBatch = await tf.expandDims(imageTensor, 0);
-
-        //@TODO replace model
-        const model = tf.sequential();
-        model.add(
-          tf.layers.conv2d({
-            inputShape: [256, 256, 3],
-            filters: 32,
-            kernelSize: 3,
-            activation: "relu",
-          })
-        );
-        model.add(tf.layers.maxPool2d({ poolSize: [2, 2] }));
-        model.add(
-          tf.layers.conv2d({ filters: 64, kernelSize: 3, activation: "relu" })
-        );
-        model.add(tf.layers.flatten());
-        model.add(tf.layers.dense({ units: 64, activation: "relu" }));
-        model.add(tf.layers.dense({ units: 1, activation: "sigmoid" }));
-        model.compile({
-          optimizer: "adam",
-          loss: "binaryCrossentropy",
-          metrics: ["accuracy"],
-        });
-
-        const yPred = await (
-          model.predict(imageTensorWithBatch) as Tensor<Rank>
-        ).data();
-        const value = yPred[0];
-        setPrediction({
-          value: value,
-          class:
-            value > 0.7
-              ? Prediction.MALIGNANT
-              : value > 0.4
-              ? Prediction.UNCERTAIN
-              : Prediction.BENIGN,
-        });
-      } catch (err) {
-        console.log(err);
-      }
-    })();
+    fetch(process.env.BACKEND_URL!, {
+      method: "post",
+      body: formdata,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
+      .then(async (res) => {
+        const { pred, base64Image } = await res.json();
+        setResult((old) => ({
+          value: pred,
+          class: Prediction.BENIGN,
+          base64Image: base64Image,
+        }));
+      })
+      .catch((err) => console.error(err));
   }, []);
 
   if (error) {
@@ -91,7 +65,7 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
     );
   }
 
-  if (prediction === null) {
+  if (result === null) {
     return (
       <View
         style={tw`w-full h-full bg-white flex justify-center items-center px-4`}
@@ -103,7 +77,7 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
 
   return (
     <View style={tw`w-full h-full bg-white flex items-center p-4`}>
-      {prediction.class == Prediction.MALIGNANT ? (
+      {result.class == Prediction.MALIGNANT ? (
         <View
           style={tw`w-full flex flex-col justify-center items-center mt-16`}
         >
@@ -117,7 +91,7 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
             a checkup. To get an accurate diagnosis.
           </Text>
         </View>
-      ) : prediction.class == Prediction.UNCERTAIN ? (
+      ) : result.class == Prediction.UNCERTAIN ? (
         <View
           style={tw`w-full flex flex-col justify-center items-center mt-16`}
         >
@@ -143,23 +117,31 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
           </Text>
         </View>
       )}
-
+      {/*<Image
+        style={tw`rounded-sm`}
+        resizeMode={"contain"}
+        width={500 / 4}
+        height={500 / 4}
+        source={{
+          uri: route.params.imgUri,
+        }}
+      />*/}
       <View style={tw`w-full flex flex-row items-center justify-start mt-12`}>
         <Image
           style={tw`rounded-sm`}
           resizeMode={"contain"}
-          width={256 / 4}
-          height={256 / 4}
+          width={500 / 4}
+          height={500 / 4}
           source={{
-            uri: `data:image/png;base64,${route.params.imageBase64Encoded}`,
+            uri: `data:image/jpeg;base64,${result.base64Image}`,
           }}
         />
         <View style={tw`ml-4 flex flex-col`}>
           <Text style={tw`text-lg font-bold`}>Your result:</Text>
           <Text style={tw``}>
-            Malignant probability: {prediction.value.toFixed(4)}
+            Malignant probability: {result.value.toFixed(4)}
           </Text>
-          <Text style={tw``}>Prediction: {prediction.class}</Text>
+          <Text style={tw``}>Prediction: {result.class}</Text>
         </View>
       </View>
     </View>

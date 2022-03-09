@@ -1,0 +1,39 @@
+name: mole-patrol
+channels:
+  - defaults
+  - pytorch
+dependencies:
+  - python=3.7
+  - pip
+  - numpy
+  - jupyter
+  - matplotlib
+  - scikit-learn
+  - scipy
+  - seaborn
+  - h5py
+  - unidecode
+  - pywin32
+  - pytorch=1.9.0
+  - torchvision
+  - cudatoolkit=10.2
+  - freetype=2.10.4
+  - tqdm
+  - pandas
+  - gensim
+  - tensorboard
+  - scikit-image
+  - nltk
+  - python-graphviz
+  - pydot
+  - tabulate
+  - spacy
+  - pip:
+      - future
+      - tb-nightly
+      - gym
+      - pillow
+      - kaggle
+      - ipywidgets
+      - tensorflow==2.8.0
+      - flask
