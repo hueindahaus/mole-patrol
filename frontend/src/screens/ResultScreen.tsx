@@ -44,8 +44,8 @@ const ResultScreen: React.FC<NativeStackScreenProps<ParamList, "Result">> = ({
         "Content-Type": "multipart/form-data",
       },
     })
-      .then(async (res) => {
-        const { pred, base64Image } = await res.json();
+      .then(async (res) => res.json())
+      .then(({ pred, base64Image }) => {
         setResult((old) => ({
           value: pred,
           class: Prediction.BENIGN,
