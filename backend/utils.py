@@ -1,6 +1,7 @@
 from io import BytesIO
 import base64
 
+
 # Convert Image to Base64 
 def im_2_b64(image):
     buff = BytesIO()

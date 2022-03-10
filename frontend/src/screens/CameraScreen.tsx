@@ -78,7 +78,7 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
           onCameraReady={async () => {
             if (Platform.OS === "android") {
               const supportedRatios =
-              await camera.current?.getSupportedRatiosAsync();
+                await camera.current?.getSupportedRatiosAsync();
               if (supportedRatios?.includes("1:1")) {
                 const ratio = "1:1";
 
@@ -100,10 +100,13 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
                   setPictureSize(bestSupportedPictureSize);
                 }
               } else {
-                setError("Your device camera does not support 1:1 aspect ratio.");
+                setError(
+                  "Your device camera does not support 1:1 aspect ratio."
+                );
               }
             } else if (Platform.OS === "ios") {
-              const pictureSizes = await camera.current?.getAvailablePictureSizesAsync();
+              const pictureSizes =
+                await camera.current?.getAvailablePictureSizesAsync();
               setPictureSize(pictureSizes![0]);
             }
           }}
@@ -127,6 +130,7 @@ const CameraScreen: React.FC<NativeStackScreenProps<ParamList, "Camera">> = ({
                 let { uri, width, height } =
                   await camera.current.takePictureAsync({
                     base64: false,
+                    skipProcessing: true,
                   });
 
                 let cropDim;

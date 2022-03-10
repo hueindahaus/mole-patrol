@@ -5294,7 +5294,7 @@ react-native-codegen@^0.0.6:
 
 react-native-fs@^2.19.0:
   version "2.19.0"
-  resolved "https://registry.npmjs.org/react-native-fs/-/react-native-fs-2.19.0.tgz"
+  resolved "https://registry.yarnpkg.com/react-native-fs/-/react-native-fs-2.19.0.tgz#5747eb52a5a3d2b31c8fb76f5f8044d0a855122c"
   integrity sha512-Yl09IbETkV5UJcBtVtBLttyTmiAhJIHpGA/LvredI5dYiw3MXMMVu42bzELiuH2Bwj7F+qd0fMNvgfBDiDxd2A==
   dependencies:
     base-64 "^0.1.0"
