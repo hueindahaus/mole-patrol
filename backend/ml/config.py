@@ -1,7 +1,7 @@
 # ML config
 img_size = 299
 batch_size = 16
-model_path = "models/test/checkpoint"
+model_path = "models/primary"
 
 threshold = 0.197710
 

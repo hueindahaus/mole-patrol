@@ -12,7 +12,7 @@ from ml.utils import extract_salient_maps, round_by_threshold
 app = Flask(__name__)
 
 #model = tf.keras.models.load_model(f'ml/{model_path}')
-model = tf.keras.models.load_model(f'ml/models/test/checkpoint_primary')
+model = tf.keras.models.load_model(f'ml/models/primary')
 
 @app.route('/')
 def index():
